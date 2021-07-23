@@ -3,15 +3,16 @@
    <nav-bar class="home-style">
        <div slot="center">购物街</div>
        </nav-bar>
+        <tab-control :title="['流行','新款','精选']" class="tab-control" @goodsclick='goodschoose' ref="tabcontrol1" v-show="istabshow"></tab-control>
        <!-- ref 是用于定位元素和取到组件的内容，:是绑定属性 @是绑定方法 -->
    <Scroll class="content" ref="Scroll" 
    :probetype="3"
     @scroll="contentscroll " :pullup="true" @pullingup="loadmore">
        <!-- 把要滚动的内容放进该组件中 -->
-       <childswiper :banner="banner"></childswiper>
+       <childswiper :banner="banner" @swiperimageload="loadswiperimage"></childswiper>
    <recommendview :recommends="recommends"></recommendview>
    <feature></feature>
-   <tab-control :title="['流行','新款','精选']" class="tab-control" @goodsclick='goodschoose'></tab-control>
+   <tab-control :title="['流行','新款','精选']" class="tab-control" @goodsclick='goodschoose' ref="tabcontrol2"></tab-control>
    <goods-list :goods="showgoods" ></goods-list>
    </Scroll>
     <back-top @click.native="backclick" v-show="isshowbacktop"></back-top>
@@ -66,22 +67,66 @@ export default {
               sell:{page:0,list:[]}
           },
            currentindex:'pop',
-           isshowbacktop:false
+           isshowbacktop:false,
+           tabcontroloffsettop:0,
+           istabshow:false,
+           locate:0
        }
    },
    computed:{
            showgoods(){
                return this.goods[this.currentindex].list
            }
+         
    },
+     activated(){
+                this.$refs.Scroll.refresh()
+                this.$refs.Scroll.scrollTo(0,this.locate,10)
+                
+           },
+           deactivated(){
+              this.locate=this.$refs.Scroll.scroll.y 
+             
+           },
    created(){
       //组件创建后，在生命周期函数里发送网络请求,请求数据
      this.getHomeMultidata()
      this.gethomegoods('pop')
      this.gethomegoods('sell')
      this.gethomegoods('new')
+    
+ },
+ mounted(){
+     //处理图片加载完成后的监听事件，执行refresh函数，可以实时更新scroll的可滑动高度
+    //  this.$bus.$on('itemimageload',()=>{ 
+    //     this.$refs.Scroll.scroll.refresh()
+    //    })
+        //这样写的缺点是，每次加载一个图片就要刷新一次，很麻烦，所以引入防抖动，就是先等待一定时间，如果还有刷新请求，就取消上一次的刷新，跟后面的一起提交刷新
+       
+        const refresh=this.debounce(this.$refs.Scroll.refresh)
+      this.$bus.$on('itemimageload',()=>{
+        refresh()
+          //加入防抖动后的滑动更新
+      })
  },
     methods:{
+        loadswiperimage(){
+              //console.log(this.$refs.tabcontrol.$el.offsetTop);
+              //获得tabcontrol距离页面顶部的距离
+              this.tabcontroloffsettop=this.$refs.tabcontrol2.$el.offsetTop
+        },
+        debounce(func,delay){
+               let timer=null
+              return function(...args){
+                if (timer) {
+                    clearTimeout(timer)
+                }
+                timer=setTimeout(() => {
+                   func.apply(this,args) 
+                }, delay);
+              }
+        },
+
         backclick(){
            this.$refs.Scroll.scrollTo(0,0)
            //this.$refs.Scroll直接进入scroll组件，然后获取里面的方法和属性
@@ -92,7 +137,12 @@ export default {
             this.gethomegoods(this.currentindex)
         },
         contentscroll(position){
+            //回到顶部
             this.isshowbacktop=position.y<-1000
+            //吸顶效果
+            setTimeout(() => {
+                this.istabshow=position.y<-this.tabcontroloffsettop
+            }, );
         },
         goodschoose(index){
                switch(index){
@@ -103,10 +153,12 @@ export default {
                       case 2:this.currentindex='sell'
                       
                }
+               this.$refs.tabcontrol1.indexactive=index
+                this.$refs.tabcontrol2.indexactive=index
         },
       getHomeMultidata(){
             getHomeMultidata().then(res=>{
-          console.log(res);
+         
            this.banner=res.data.banner.list
            this.recommends=res.data.recommend.list
        })
@@ -114,7 +166,7 @@ export default {
       gethomegoods(type){
          const page=this.goods[type].page+1
           gethomegoods(type,page).then(res=>{
-               console.log(res);
+            
                this.goods[type].list.push(...res.data.list)
                this.goods[type].page+=1
                this.$refs.Scroll.finishpullup()
@@ -145,16 +197,16 @@ export default {
        
    }
    .tab-contorl{
-       position: sticky;
-       top: 44px;
-       background-color: white;
+    position: relative;
+    z-index: 9;
+    background-color: white;
    }
    .content{
       position: absolute;
       left: 0px;
       top:44px;
       right: 0;
-     
+    
     
       
    }

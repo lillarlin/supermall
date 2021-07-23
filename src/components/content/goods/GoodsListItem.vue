@@ -1,6 +1,7 @@
 <template>
-  <div class="goodslistitem">
-    <img :src="goodsitem.show.img" alt="">
+  <div class="goodslistitem" @click="godetail">
+    <img :src="showimage" alt="" @load="imageload">
+    <!-- 监听图片加载 -->
     <div class="goods-info"><p>{{goodsitem.title}}</p>
          <span class="price">{{goodsitem.price}}</span>
          <span class="cfav">{{goodsitem.cfav}}</span>
@@ -17,6 +18,24 @@ export default {
       default(){
         return {}
       }
+    }
+  },
+  methods:{
+    //图片加载完之后通过事件总线发射一个监听事件
+    imageload(){
+     if(this.$route.path.includes('/home')){
+       this.$bus.$emit('itemimageload')
+     }else if(this.$route.path.includes('/detail')){
+      this.$bus.$emit('detailimageload')
+     }
+     },
+    godetail(){
+     this.$router.push('/detail/'+this.goodsitem.iid)
+    }
+  },
+  computed:{
+    showimage(){
+      return this.goodsitem.image || this.goodsitem.show.img
     }
   }
 }

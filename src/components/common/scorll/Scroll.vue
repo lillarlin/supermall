@@ -43,9 +43,11 @@ export default {
        this.scroll.on('scroll',(position)=>{
          this.$emit('scroll',position)
        })
-       this.scroll.on('pullingUp',()=>{
+     if(this.pullup){
+         this.scroll.on('pullingUp',()=>{
         this.$emit('pullingup')
        })
+     }
     },
     methods:{
         scrollTo(x,y,time=500){
@@ -54,6 +56,10 @@ export default {
         },
         finishpullup(){
           this.scroll.finishPullUp()
+        },
+        refresh(){
+        
+          this.scroll.refresh()
         }
     }
 }
