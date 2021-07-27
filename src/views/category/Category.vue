@@ -1,91 +1,90 @@
 <template>
- <div>
-    <div class="wraper">
-        <ul class="content">
-            <button @click="butclick">点击</button>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-            <li>哈哈哈</li>
-        </ul>
+    <div class="category">
+        <nav-bar class="category-style">
+            <div slot="center">商品分类</div>
+        </nav-bar>
+       <div class="cate-list">
+           <div class="cate-left"> <slide-bar :slidebarlist="categoryList" @clickcategory="clickcategory"></slide-bar></div>
+       <div class="cate-rigth">
+            <subcategory :subcatelist="subcategoryList" :getcategorydetail="catedetaillist"></subcategory>
+           
+       </div>
+       </div>
     </div>
- </div>
 </template>
 
 <script>
-import bscroll, { MouseWheel } from 'better-scroll'
+import NavBar from '../../components/common/navbar/NavBar.vue'
+import SlideBar from './childcopms/SlideBar.vue'
+import subcategory from './childcopms/subcategory.vue'
+
+import {getCategory,getSubcategory,getcatedetail} from 'network/category.js'
 export default {
 name:'Category',
-data(){
-    return {
-        scroll:null
-    }
+components:{
+    NavBar,
+   SlideBar,
+   subcategory,
+  
 },
-mounted(){
-    //钩子函数，在组件挂载后才可以获得dom元素，所以不可以在creatd函数里面使用
-    this.scroll=new bscroll(document.querySelector('.wraper'),{
-        probeType:3,
-        pullUpLoad:true,
-       mouseWheel:true,
-      
-    })
-    this.scroll.on('scroll',(position)=>{
-        console.log(position);
-    })
-    this.scroll.on('pullingUp',()=>{
-          console.log('上啦加载更多');
-    })
+data(){
+return {
+    categoryList: [],
+    subcategoryList:[],
+    catedetaillist:[],
+    cateindex:0
+   
+}
+},
+created(){
+   this.getCategory()
+   this.getSubcategory('3627')
+   this.getcatedetail('10062603','pop')
 },
 methods:{
-    butclick(){
-        console.log('点击了了');
-    }
+   
+    getCategory(){
+        getCategory().then(res=>{
+         this.categoryList=res.data.category.list
+        })
+    },
+clickcategory({maitKey,index}){
+   this.getSubcategory(maitKey)
+   this.cateindex=index
+},
+getSubcategory(key){
+          getSubcategory(key).then(res=>{
+            this.subcategoryList=[...res.data.list]
+          }) 
+},
+getcatedetail(miniWallkey,type){
+    getcatedetail(miniWallkey,type).then(res=>{
+           this.catedetaillist=[...res]   
+    })
+}
+
 }
 }
 </script>
 
-<style>
-.wraper{
-    height: 200px;
-    /* 必须设置高度 */
-    background-color: red;
-    overflow: hidden;
+<style scoped>
+.category-style{
+    background-color: pink;
+    color:white;
+    font-size: 16px;
+  
+   
 }
+.cate-list{
+    display: flex;
+}
+.cate-left{
+   width: 100px;
+}
+.cate-rigth{
+    flex: 1;
+    width: 100%;
+
+}
+
 </style>
